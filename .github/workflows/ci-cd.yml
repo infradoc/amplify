@@ -44,6 +44,10 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_PROJECT_KEY: "projectx-scan"  # Replace with your actual project key
+          SONAR_PROJECT_NAME: "projectx-scan"  # Replace with your actual project name
+        with:
+          args: -X
 
       - name: Set scan result and check status
         id: set-scan-result
