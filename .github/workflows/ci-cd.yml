@@ -44,7 +44,7 @@ jobs:
         with:
           args: -X
           token: ${{ secrets.SONAR_TOKEN }}
-          properties: sonar-project.properties
+          host-url: ${{ secrets.SONAR_HOST_URL }}
       - name: Set scan result and check status
         id: set-scan-result
         run: |
