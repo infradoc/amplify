@@ -41,10 +41,9 @@ jobs:
         run: rm -rf /opt/sonar-scanner/.sonar/cache
       - name: SonarQube Scan with Debug Logging
         uses: sonarsource/sonarqube-scan-action@master
-        with:
-          args: -X
-          token: ${{ secrets.SONAR_TOKEN }}
-          host-url: ${{ secrets.SONAR_HOST_URL }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
       - name: Set scan result and check status
         id: set-scan-result
