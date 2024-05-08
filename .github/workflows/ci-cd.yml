@@ -45,11 +45,10 @@ jobs:
         run: rm -rf /opt/sonar-scanner/.sonar/cache
       - name: SonarQube Scan with Debug Logging
         uses: sonarsource/sonarqube-scan-action@master
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
           args: -X
+        #  token: ${{ secrets.SONAR_TOKEN }}
+          properties: sonar-project.properties
       - name: Set scan result and check status
         id: set-scan-result
         run: |
@@ -72,7 +71,7 @@ jobs:
           echo "GitHub Pull Request Number: ${{ github.event.pull_request.number }}"
           echo "GitHub Base Ref: ${{ github.event.pull_request.base.ref }}"
           echo "GitHub Merged: ${{ github.event.pull_request.merged }}"
-          
+
   merge-dev:
     needs: [scan]
     runs-on: ubuntu-latest
