@@ -4,10 +4,6 @@ on:
   push:
     branches:
       - feature
-      - main
-  pull_request:
-    branches:
-      - dev
 
 jobs:
   build:
@@ -33,7 +29,7 @@ jobs:
   scan:
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main')
+    if: github.ref == 'refs/heads/feature'
     steps:
       - uses: actions/checkout@v4
       - name: Download Artifact
@@ -72,52 +68,46 @@ jobs:
           echo "GitHub Base Ref: ${{ github.event.pull_request.base.ref }}"
           echo "GitHub Merged: ${{ github.event.pull_request.merged }}"
 
-  merge-dev:
-    needs: [scan]
+  merge-to-dev:
+    needs: scan
     runs-on: ubuntu-latest
-#   if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.ref == 'refs/heads/dev' }}
-    if: | 
-      github.event_name == 'pull_request' &&
-      github.event.action == 'closed' &&
-      github.event.pull_request.merged == true &&
-      github.ref == ${{ github.event.number == 0 && 'refs/heads/master' ||  format('refs/pull/{0}/merge', github.event.number) }}
-
+    if: github.ref == 'refs/heads/feature'
     steps:
       - name: Merge feature branch into dev
         uses: actions/github-script@v4
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            await github.pulls.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: ${{ github.event.pull_request.number }},
-              merge_method: 'squash'
-            })
+            const github = require('@actions/github');
+            const context = github.context;
 
-  merge-prod:
-    needs: [scan]
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.ref == 'refs/heads/main'
-    steps:
-      - name: Wait for reviewer approval
-        uses: actions/github-script@v4
-        with:
-          script: |
-            const { data: pullRequest } = await github.pulls.get({
+            const response = await github.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: ${{ github.event.pull_request.number }},
+              title: 'Merge feature branch into dev',
+              head: 'feature',
+              base: 'dev'
             });
-            if (!pullRequest.merged) {
-              throw new Error("Pull request not merged");
-            }
-      - name: Merge dev into prod
+            console.log(response.data.html_url);  # Print the URL of the created pull request for reference
+
+  pull-request-to-main:
+    needs: merge-to-dev
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev'
+    steps:
+      - name: Create pull request from dev to main
         uses: actions/github-script@v4
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            await github.pulls.merge({
+            const github = require('@actions/github');
+            const context = github.context;
+
+            const response = await github.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: ${{ github.event.pull_request.number }},
-              merge_method: 'squash'
-            })
+              title: 'Merge dev branch into main',
+              head: 'dev',
+              base: 'main'
+            });
+            console.log(response.data.html_url);  # Print the URL of the created pull request for reference
