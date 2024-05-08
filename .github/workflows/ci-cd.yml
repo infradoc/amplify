@@ -42,8 +42,12 @@ jobs:
       - name: SonarQube Scan with Debug Logging
         uses: sonarsource/sonarqube-scan-action@master
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: 'squ_9d8cfd78ca7ebe2aa642a5cc55bc6ca4021da09c'
+          SONAR_HOST_URL: 'https://5e80d3c7fc7756cef515235ec65a4dbc.serveo.net'
+          SONAR_PROJECT_KEY: "projectx-scan"  # Replace with your actual project key
+          SONAR_PROJECT_NAME: "projectx-scan"  # Replace with your actual project name
+        with:
+          args: -X
 
       - name: Set scan result and check status
         id: set-scan-result
