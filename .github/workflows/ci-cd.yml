@@ -75,7 +75,13 @@ jobs:
   merge-dev:
     needs: [scan]
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.ref == 'refs/heads/dev'
+#   if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.ref == 'refs/heads/dev' }}
+    if: | 
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == true &&
+      github.ref == ${{ github.event.number == 0 && 'refs/heads/master' ||  format('refs/pull/{0}/merge', github.event.number) }}
+
     steps:
       - name: Merge feature branch into dev
         uses: actions/github-script@v4
