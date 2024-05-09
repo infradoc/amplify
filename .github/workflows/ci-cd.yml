@@ -1,0 +1,120 @@
+name: Node.js CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - feature
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm install
+      - name: Run tests
+        run: npm test
+      - name: Build the project
+        run: npm run build
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: website
+          path: '**/*'
+
+  scan:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/feature'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: website
+          path: '**/*'
+      - name: Clear SonarScanner cache
+        run: rm -rf /opt/sonar-scanner/.sonar/cache
+      - name: SonarQube Scan with Debug Logging
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: 'squ_9d8cfd78ca7ebe2aa642a5cc55bc6ca4021da09c'
+          SONAR_HOST_URL: 'https://5e80d3c7fc7756cef515235ec65a4dbc.serveo.net'
+          SONAR_PROJECT_KEY: "projectx-scan"  # Replace with your actual project key
+          SONAR_PROJECT_NAME: "projectx-scan"  # Replace with your actual project name
+        with:
+          args: -X
+
+      - name: Set scan result and check status
+        id: set-scan-result
+        run: |
+          if [ $? -eq 0 ]; then
+            echo "scan_success=true" >> $GITHUB_ENV
+          else
+            echo "scan_success=false" >> $GITHUB_ENV
+            exit 1
+          fi
+      - name: Print scan result
+        run: echo "Scan success:" $scan_success
+
+
+  merge-to-dev:
+    needs: scan
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/feature'
+    steps:
+      - name: Merge feature branch into dev
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const github = require('@actions/github');
+            const context = github.context;
+
+            const response = await github.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Merge feature branch into dev',
+              head: 'feature',
+              base: 'dev'
+            });
+            console.log(response.data.html_url);  # Print the URL of the created pull request for reference
+
+  pull-request-to-main:
+    needs: merge-to-dev
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev'
+    steps:
+      - name: Create pull request from dev to main
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const github = require('@actions/github');
+            const context = github.context;
+
+            const response = await github.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Merge dev branch into main',
+              head: 'dev',
+              base: 'main'
+            });
+            console.log(response.data.html_url);  # Print the URL of the created pull request for reference
+
+
+            
+  debug-event:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Debug Event
+        run: |
+          echo "GitHub Event Name: ${{ github.event_name }}"
+          echo "GitHub Event Action: ${{ github.event.action }}"
+          echo "GitHub Pull Request Number: ${{ github.event.pull_request.number }}"
+          echo "GitHub Base Ref: ${{ github.event.pull_request.base.ref }}"
+          echo "GitHub Merged: ${{ github.event.pull_request.merged }}"
