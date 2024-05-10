@@ -42,10 +42,9 @@ jobs:
       - name: SonarQube Scan with Debug Logging
         uses: sonarsource/sonarqube-scan-action@master
         env:
-          SONAR_TOKEN: 'squ_9d8cfd78ca7ebe2aa642a5cc55bc6ca4021da09c'
-          SONAR_HOST_URL: 'https://5e80d3c7fc7756cef515235ec65a4dbc.serveo.net'
-          SONAR_PROJECT_KEY: "projectx-scan"  # Replace with your actual project key
-          SONAR_PROJECT_NAME: "projectx-scan"  # Replace with your actual project name
+          SONAR_TOKEN: "squ_9d8cfd78ca7ebe2aa642a5cc55bc6ca4021da09c"
+          SONAR_HOST_URL: "https://872f6e251bea73c912c0ee14aff5aa62.serveo.net"
+          # GITHUB_TOKEN: ${{ secrets.vp_token }}
         with:
           args: -X
 
@@ -70,7 +69,7 @@ jobs:
       - name: Merge feature branch into dev
         uses: actions/github-script@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.vp_token }}
           script: |
             const github = require('@actions/github');
             const context = github.context;
@@ -92,7 +91,7 @@ jobs:
       - name: Create pull request from dev to main
         uses: actions/github-script@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.vp_token }}
           script: |
             const github = require('@actions/github');
             const context = github.context;
