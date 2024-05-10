@@ -78,7 +78,8 @@ jobs:
               head: 'feature',
               base: 'dev'
             });
-            console.log(response.data.html_url);  # Print the URL of the created pull request for reference
+            console.log(response.data.html_url);
+
 
   pull-request-to-main:
     needs: merge-to-dev
@@ -92,8 +93,8 @@ jobs:
           script: |
             const context = github.context;
             const response = await github.pulls.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+              owner: github.context.repo.owner,
+              repo: github.context.repo.repo,
               title: 'Merge dev branch into main',
               head: 'dev',
               base: 'main'
