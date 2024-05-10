@@ -29,7 +29,7 @@ jobs:
   scan:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/feature'
+    if: github.ref == 'refs/heads/feature'  # Check for feature branch only
     steps:
       - uses: actions/checkout@v4
       - name: Download Artifact
@@ -42,12 +42,8 @@ jobs:
       - name: SonarQube Scan with Debug Logging
         uses: sonarsource/sonarqube-scan-action@master
         env:
-          SONAR_TOKEN: "squ_9d8cfd78ca7ebe2aa642a5cc55bc6ca4021da09c"
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: "https://872f6e251bea73c912c0ee14aff5aa62.serveo.net"
-          # GITHUB_TOKEN: ${{ secrets.vp_token }}
-        with:
-          args: -X
-
       - name: Set scan result and check status
         id: set-scan-result
         run: |
@@ -60,34 +56,40 @@ jobs:
       - name: Print scan result
         run: echo "Scan success:" $scan_success
 
-
   merge-to-dev:
     needs: scan
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/feature' && env.scan_success == 'true'
     steps:
-      - name: Merge feature branch into dev using REST API
+      - name: Merge feature branch into dev using Git
+        uses: actions/checkout@v3  # Use actions/checkout with fetch-depth
+        with:
+          fetch-depth: 1
+      - name: Install Git credentials (optional, for private repos)
         run: |
-          curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github.v3+json" \
-          https://api.github.com/repos/${{ github.repository }}/pulls \
-          -d '{"title": "Merge feature branch into dev", "head": "feature", "base": "dev"}'
+          git config user.name 'GitHub Actions'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          echo "ACCESS_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> .git/credentials
+          git config credential.helper 'store --file=.git/credentials'
+      - name: Fetch changes (optional, for private repos)
+        run: git fetch origin
+      - name: Merge feature branch into dev
+        run: git merge feature
+      - name: Push changes to dev branch
+        run: git push origin HEAD:dev
 
   pull-request-to-main:
     needs: merge-to-dev
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/dev'
     steps:
-      - name: Create pull request from dev to main using REST API
+      - name: Create pull request from dev to main using REST API (Optional)
         run: |
           curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
           -H "Accept: application/vnd.github.v3+json" \
           https://api.github.com/repos/${{ github.repository }}/pulls \
           -d '{"title": "Merge dev branch into main", "head": "dev", "base": "main"}'
 
-
-
-            
   debug-event:
     runs-on: ubuntu-latest
     steps:
