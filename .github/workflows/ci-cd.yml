@@ -72,7 +72,7 @@ jobs:
         run: |
           git config user.name 'GitHub Actions'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          echo "ACCESS_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> .git/credentials
+          echo "ACCESS_TOKEN=${{ secrets.vp_token }}" >> .git/credentials
           git config credential.helper 'store --file=.git/credentials'
       - name: Fetch changes (optional, for private repos)
         run: git fetch origin
@@ -89,7 +89,7 @@ jobs:
     steps:
       - name: Create pull request from dev to main using REST API (Optional)
         run: |
-          curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          curl -X POST -H "Authorization: token ${{ secrets.vp_token }}" \
           -H "Accept: application/vnd.github.v3+json" \
           https://api.github.com/repos/${{ github.repository }}/pulls \
           -d '{"title": "Merge dev branch into main", "head": "dev", "base": "main"}'
