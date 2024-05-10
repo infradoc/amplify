@@ -64,21 +64,30 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.scan.outputs.scan_success == 'true'
     steps:
-      - name: Merge feature branch into dev using Git
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2  # Consider using v2 for better performance and newer features
         with:
-          fetch-depth: 1
-      - name: Install Git credentials (optional, for private repos)
+          fetch-depth: 0  # Fetch all history for all branches and tags
+
+      - name: Configure Git
         run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git config --global http.https://github.com/.extraheader "AUTHORIZATION: bearer ${{ secrets.vp_token }}"
-      - name: Fetch changes (optional, for private repos)
-        run: git fetch origin
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          # Set Authorization header only for the next git operation
+          git config http.https://github.com/.extraheader "AUTHORIZATION: bearer ${{ secrets.vp_token }}"
+      
+      - name: Fetch changes
+        run: |
+          git fetch origin
+          # Remove the extra header after use to prevent duplication in future commands
+          git config --unset http.https://github.com/.extraheader
+
       - name: Merge feature branch into dev
-        run: git merge feature
+        run: git merge origin/feature  # Ensure to merge the correct branch
+
       - name: Push changes to dev branch
         run: git push origin HEAD:dev
+
 
 
   pull-request-to-main:
