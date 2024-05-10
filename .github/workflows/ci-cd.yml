@@ -77,7 +77,7 @@
             
             # Temporarily set remote URL to include access token
             ORIGIN_URL=$(git config --get remote.origin.url)
-            NEW_URL=$(echo "$ORIGIN_URL" | sed "s|https://|https://${{ secrets.vp_token }}@|")
+            NEW_URL=$(echo "$ORIGIN_URL" | sed "s|https://|https://${{ secrets.GITHUB_TOKEN }}@|")
             git config remote.origin.url "$NEW_URL"
 
         - name: Fetch all branches
@@ -93,7 +93,7 @@
           run: |
             # Reset the remote URL
             ORIGIN_URL=$(git config --get remote.origin.url)
-            NEW_URL=$(echo "$ORIGIN_URL" | sed "s|https://${{ secrets.vp_token }}@|https://|")
+            NEW_URL=$(echo "$ORIGIN_URL" | sed "s|https://${{ secrets.GITHUB_TOKEN }}@|https://|")
             git config remote.origin.url "$NEW_URL"
 
 
@@ -104,7 +104,7 @@
       steps:
         - name: Create pull request from dev to main using REST API (Optional)
           run: |
-            curl -X POST -H "Authorization: token ${{ secrets.vp_token }}" \
+            curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/${{ github.repository }}/pulls \
             -d '{"title": "Merge dev branch into main", "head": "dev", "base": "main"}'
