@@ -67,18 +67,24 @@ jobs:
     if: github.ref == 'refs/heads/feature'
     steps:
       - name: Merge feature branch into dev
-        uses: actions/github-script@v4
+        uses: actions/github-script@v3
         with:
           github-token: ${{ secrets.vp_token }}
           script: |
-            const response = await github.pulls.create({
-              owner: github.context.repo.owner,
-              repo: github.context.repo.repo,
-              title: 'Merge feature branch into dev',
-              head: 'feature',
-              base: 'dev'
-            });
-            console.log(response.data.html_url);
+            // Ensure the context has the required properties
+            if (github.context.repo && github.context.repo.owner && github.context.repo.repo) {
+              const response = await github.pulls.create({
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
+                title: 'Merge feature branch into dev',
+                head: 'feature',
+                base: 'dev'
+              });
+              console.log(response.data.html_url);
+            } else {
+              console.error('Required context properties are not available.');
+            }
+
 
 
   pull-request-to-main:
