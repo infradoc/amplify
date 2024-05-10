@@ -65,28 +65,36 @@ jobs:
     if: needs.scan.outputs.scan_success == 'true'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2  # Consider using v2 for better performance and newer features
+        uses: actions/checkout@v2
         with:
           fetch-depth: 0  # Fetch all history for all branches and tags
 
-      - name: Configure Git
+      - name: Set up Git credentials
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          # Set Authorization header only for the next git operation
-          git config http.https://github.com/.extraheader "AUTHORIZATION: bearer ${{ secrets.vp_token }}"
-      
+          
+          # Temporarily set remote URL to include access token
+          ORIGIN_URL=$(git config --get remote.origin.url)
+          NEW_URL=$(echo "$ORIGIN_URL" | sed "s://:://${{ secrets.GITHUB_TOKEN }}@:")
+          git config remote.origin.url "$NEW_URL"
+
       - name: Fetch changes
+        run: git fetch origin
+
+      - name: Reset remote URL
         run: |
-          git fetch origin
-          # Remove the extra header after use to prevent duplication in future commands
-          git config --unset http.https://github.com/.extraheader
+          # Reset the remote URL
+          ORIGIN_URL=$(git config --get remote.origin.url)
+          NEW_URL=$(echo "$ORIGIN_URL" | sed "s://${{ secrets.GITHUB_TOKEN }}@://:")
+          git config remote.origin.url "$NEW_URL"
 
       - name: Merge feature branch into dev
         run: git merge origin/feature  # Ensure to merge the correct branch
 
       - name: Push changes to dev branch
         run: git push origin HEAD:dev
+
 
 
 
@@ -112,3 +120,4 @@ jobs:
           echo "GitHub Pull Request Number: ${{ github.event.pull_request.number }}"
           echo "GitHub Base Ref: ${{ github.event.pull_request.base.ref }}"
           echo "GitHub Merged: ${{ github.event.pull_request.merged }}"
+
