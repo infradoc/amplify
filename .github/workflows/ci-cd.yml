@@ -76,7 +76,7 @@ jobs:
           
           # Temporarily set remote URL to include access token
           ORIGIN_URL=$(git config --get remote.origin.url)
-          NEW_URL=$(echo "$ORIGIN_URL" | sed "s://:://${{ secrets.GITHUB_TOKEN }}@:")
+          NEW_URL=$(echo "$ORIGIN_URL" | sed "s|https://|https://***@|")
           git config remote.origin.url "$NEW_URL"
 
       - name: Fetch changes
@@ -86,7 +86,7 @@ jobs:
         run: |
           # Reset the remote URL
           ORIGIN_URL=$(git config --get remote.origin.url)
-          NEW_URL=$(echo "$ORIGIN_URL" | sed "s://${{ secrets.GITHUB_TOKEN }}@://:")
+          NEW_URL=$(echo "$ORIGIN_URL" | sed "s|https://***@|https://|")
           git config remote.origin.url "$NEW_URL"
 
       - name: Merge feature branch into dev
@@ -94,6 +94,7 @@ jobs:
 
       - name: Push changes to dev branch
         run: git push origin HEAD:dev
+
 
 
 
