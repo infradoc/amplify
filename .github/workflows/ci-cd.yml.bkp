@@ -64,27 +64,48 @@ jobs:
   merge-to-dev:
     needs: scan
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/feature' && env.scan_success == 'true'
+    if: github.ref == 'refs/heads/feature'
     steps:
-      - name: Merge feature branch into dev using REST API
-        run: |
-          curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github.v3+json" \
-          https://api.github.com/repos/${{ github.repository }}/pulls \
-          -d '{"title": "Merge feature branch into dev", "head": "feature", "base": "dev"}'
+      - name: Merge feature branch into dev
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.vp_token }}
+          script: |
+            // Ensure the context has the required properties
+            if (github.context.repo && github.context.repo.owner && github.context.repo.repo) {
+              const response = await github.pulls.create({
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
+                title: 'Merge feature branch into dev',
+                head: 'feature',
+                base: 'dev'
+              });
+              console.log(response.data.html_url);
+            } else {
+              console.error('Required context properties are not available.');
+            }
+
+
 
   pull-request-to-main:
     needs: merge-to-dev
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/dev'
     steps:
-      - name: Create pull request from dev to main using REST API
-        run: |
-          curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github.v3+json" \
-          https://api.github.com/repos/${{ github.repository }}/pulls \
-          -d '{"title": "Merge dev branch into main", "head": "dev", "base": "main"}'
-
+      - name: Create pull request from dev to main
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.vp_token }}
+          script: |
+            const context = github.context;
+            const response = await github.pulls.create({
+              owner: github.context.repo.owner,
+              repo: github.context.repo.repo,
+              title: 'Merge dev branch into main',
+              head: 'dev',
+              base: 'main'
+            });
+            console.log(response.data.html_url);  # Print the URL of the created pull request for reference
 
 
             
