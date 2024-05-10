@@ -68,7 +68,6 @@
           uses: actions/checkout@v2
           with:
             fetch-depth: 0  # Fetch all history for all branches and tags
-            ref: dev  # Ensure we are on the dev branch
             
         - name: Set up Git credentials
           run: |
@@ -80,14 +79,8 @@
             NEW_URL=$(echo "$ORIGIN_URL" | sed "s|https://|https://${{ secrets.GITHUB_TOKEN }}@|")
             git config remote.origin.url "$NEW_URL"
 
-        - name: Fetch all branches
-          run: git fetch --all
-
-        - name: Merge feature branch into dev
-          run: git merge origin/feature  # Merge feature into currently checked out dev branch
-
-        - name: Push changes to dev branch
-          run: git push origin dev
+        - name: Fetch changes
+          run: git fetch origin
 
         - name: Reset remote URL
           run: |
@@ -95,6 +88,10 @@
             ORIGIN_URL=$(git config --get remote.origin.url)
             NEW_URL=$(echo "$ORIGIN_URL" | sed "s|https://${{ secrets.GITHUB_TOKEN }}@|https://|")
             git config remote.origin.url "$NEW_URL"
+
+
+
+
 
 
     pull-request-to-main:
