@@ -71,10 +71,9 @@ jobs:
         with:
           github-token: ${{ secrets.vp_token }}
           script: |
-            const context = github.context;
             const response = await github.pulls.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+              owner: github.context.repo.owner,
+              repo: github.context.repo.repo,
               title: 'Merge feature branch into dev',
               head: 'feature',
               base: 'dev'
