@@ -71,9 +71,7 @@ jobs:
         with:
           github-token: ${{ secrets.vp_token }}
           script: |
-            const github = require('@actions/github');
             const context = github.context;
-
             const response = await github.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -93,9 +91,7 @@ jobs:
         with:
           github-token: ${{ secrets.vp_token }}
           script: |
-            const github = require('@actions/github');
             const context = github.context;
-
             const response = await github.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
