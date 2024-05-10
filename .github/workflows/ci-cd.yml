@@ -29,7 +29,9 @@ jobs:
   scan:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/feature'  # Check for feature branch only
+    outputs:
+      scan_success: ${{ steps.set-scan-result.outputs.scan_success }}
+    if: github.ref == 'refs/heads/feature'
     steps:
       - uses: actions/checkout@v4
       - name: Download Artifact
@@ -48,21 +50,22 @@ jobs:
         id: set-scan-result
         run: |
           if [ $? -eq 0 ]; then
-            echo "scan_success=true" >> $GITHUB_ENV
+            echo "::set-output name=scan_success::true"
           else
-            echo "scan_success=false" >> $GITHUB_ENV
+            echo "::set-output name=scan_success::false"
             exit 1
           fi
       - name: Print scan result
-        run: echo "Scan success:" $scan_success
+        run: echo "Scan success:" ${{ steps.set-scan-result.outputs.scan_success }}
+
 
   merge-to-dev:
     needs: scan
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/feature' && env.scan_success == 'true'
+    if: needs.scan.outputs.scan_success == 'true'
     steps:
       - name: Merge feature branch into dev using Git
-        uses: actions/checkout@v3  # Use actions/checkout with fetch-depth
+        uses: actions/checkout@v3
         with:
           fetch-depth: 1
       - name: Install Git credentials (optional, for private repos)
@@ -77,6 +80,7 @@ jobs:
         run: git merge feature
       - name: Push changes to dev branch
         run: git push origin HEAD:dev
+
 
   pull-request-to-main:
     needs: merge-to-dev
